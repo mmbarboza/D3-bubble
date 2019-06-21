@@ -1,5 +1,6 @@
-import * as d3 from 'd3';
-
+console.log("hello world");
+import * as d3 from "d3";
+import axios from "axios";
 // eslint-disable-next-line no-undef
 //console.log('app loaded')
 // var circle = d3.selectAll('circle');
@@ -160,115 +161,60 @@ import * as d3 from 'd3';
 
 //         d3.select(self.frameElement)
 //             .style("height", diameter + "px");
+async function createGraph() {
+  const width = 500;
+  const height = 500;
+  try {
+    const svg = d3
+      .select("#body")
+      .append("svg")
+      .attr("height", height)
+      .attr("width", width)
+      .append("g")
+      .attr("transform", "translate(0,0)");
 
-(function(){
-  const svg = d3.select('#body')
-  .append("svg")
-  .attr("height", 500)
-  .attr("width", 500)
-  .append("g")
-  .attr("transform", "translate(0,0)");
+      //read in the data
+    const csv = axios.get("/public/foodDataSet.csv");
+    console.log("csv", csv);
 
-  //need to use promise.all here instead
-  // queue.queue()
-  // .defer(d3.csv, "foodDataSet.csv")
-  // .await(ready);
+    let myData = await d3.csv("foodDataSet.csv");
+    console.log("Data returned", myData);
 
-  // d3.csv("storeData.csv", function(data){
-  //   console.log(data)
-  // })
-  //let circles = '';
+    // forces telling circles how to move and interact
+    //this one pushed everything to the middle
+    const simulation = d3.forceSimulation()
+    .force("x", d3.forceX(width / 2).strength(0.05))
+    .force("y", d3.forceY(height/2).strength(0.05));
 
-  const myData = d3.csv("foodDataSet.csv").then(function(data){
-    return data;
-  });
-  //console.log(myData)
-  // let myData;
-  // async function getData(){
-  //   myData = await d3.csv("foodDataSet.csv")
-  // }
-  // getData()
-  // console.log(myData);
-  const simulation = d3.forceSimulation();
-  // //getData();
-  d3.csv("foodDataSet.csv").then(function(data){
 
-    return svg.selectAll(".group")
-      .data(data)
-      .enter().append("circle")
+
+    //creating circles for each datapoint
+    let circles = svg
+      .selectAll(".group")
+      .data(myData)
+      .enter()
+      .append("circle")
       .attr("class", "group")
       .attr("r", 10)
-      .attr("fill", "green")
+      .attr("fill", "green");
 
-    }
-    // .attr("cy", 100)
-    // .attr("cx", 100)
+    const ticked = () => {
+      circles
+      .attr("cx", function(d){
+        return d.x;
+      })
+      .attr("cy", function(d){
+        return d.y;
+      });
+    };
 
+    //feed the data to the simulation, each time clock ticks, run function and reposition circles
+    simulation.nodes(myData).on("tick", ticked);
 
-    // simulation.nodes(data)
-    // .on('tick', ticked);
-    //   function ticked(){
-    //    data
-    //     .attr("cx", function(d){
-    //       return d.x;
-    //     })
-    //     .attr("cy", function(d){
-    //       return d.y;
-    //     });
-    //   }
-    // .attr("cx", 100)
-    // .attr("cy", 300);
-
-
-  )
-
-  .then(function(data){
-    console.log(data)
-    simulation.nodes(data)
-      .on('tick', ticked);
-
-      // function ticked(){
-      //   console.log("ticking")
-      // }
-      function ticked(){
-
-       data
-        .attr("cx", function(d){
-          return d.x;
-        })
-        .attr("cy", function(d){
-          return d.y;
-        });
-      }
     console.log(data);
-  });
-  // console.log(circles);
-  // .then(
-  //   function(){
-  //     const simulation = d3.forceSimulation()
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-  //   }
-
-
-  //   )
-
-  // var circles = svg.selectAll(".group")
-  // .data(myData)
-  // .enter.append("circle")
-  // .attr("class", "group")
-  // .attr("r", 10)
-  // .attr("fill", "green")
-
-  // function ready(error, datapoints){
-  //   const circles = svg.selectAll(".group")
-  //   .data(datapoints)
-  //   .enter().append("circle")
-  //   .attr("class", "group")
-  //   .attr("r", 10)
-  //   .attr("fill", "green")
-  // };
-
-
-
-})();
-
+createGraph();
