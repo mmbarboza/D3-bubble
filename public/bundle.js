@@ -31001,7 +31001,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
-console.log("hello world");
+console.log('hello world');
 
  // eslint-disable-next-line no-undef
 //console.log('app loaded')
@@ -31142,33 +31142,68 @@ console.log("hello world");
 //             .style("height", diameter + "px");
 
 async function createGraph() {
-  const width = 500;
+  const width = 900;
   const height = 500;
 
   try {
-    const svg = d3__WEBPACK_IMPORTED_MODULE_0__["select"]("#body").append("svg").attr("height", height).attr("width", width).append("g").attr("transform", "translate(0,0)"); //read in the data
+    const svg = d3__WEBPACK_IMPORTED_MODULE_0__["select"]('#body').append('svg').attr('height', height).attr('width', width).append('g').attr('transform', 'translate(0,0)');
+    const radiusScale = d3__WEBPACK_IMPORTED_MODULE_0__["scaleSqrt"]().domain([500, 2050]).range([10, 80]); //read in the data
 
-    const csv = axios__WEBPACK_IMPORTED_MODULE_1___default.a.get("/public/foodDataSet.csv");
-    console.log("csv", csv);
-    let myData = await d3__WEBPACK_IMPORTED_MODULE_0__["csv"]("foodDataSet.csv");
-    console.log("Data returned", myData); // forces telling circles how to move and interact
+    const csv = axios__WEBPACK_IMPORTED_MODULE_1___default.a.get('/public/foodDataSet.csv');
+    console.log('csv', csv);
+    let myData = await d3__WEBPACK_IMPORTED_MODULE_0__["csv"]('foodDataSet.csv');
+    console.log('Data returned', myData);
+    const forceX = d3__WEBPACK_IMPORTED_MODULE_0__["forceX"](function (d) {
+      if (d.Location === 'at-home') {
+        return 250;
+      } else {
+        return 750;
+      }
+    }).strength(0.05); // forces telling circles how to move and interact
     //this one pushed everything to the middle
 
-    const simulation = d3__WEBPACK_IMPORTED_MODULE_0__["forceSimulation"]().force("x", d3__WEBPACK_IMPORTED_MODULE_0__["forceX"](width / 2).strength(0.05)).force("y", d3__WEBPACK_IMPORTED_MODULE_0__["forceY"](height / 2).strength(0.05)); //creating circles for each datapoint
+    const simulation = d3__WEBPACK_IMPORTED_MODULE_0__["forceSimulation"]() //.force("x", d3.forceX(width / 2).strength(0.05))
+    .force('x', forceX).force('y', d3__WEBPACK_IMPORTED_MODULE_0__["forceY"](height / 2).strength(0.05)).force('collide', d3__WEBPACK_IMPORTED_MODULE_0__["forceCollide"](function (d) {
+      return radiusScale(d.Total) + 1;
+    })); //force collide gives radious fo area for collision to avoid - should match the radious of the circle
+    //creating circles for each datapoint
 
-    let circles = svg.selectAll(".group").data(myData).enter().append("circle").attr("class", "group").attr("r", 10).attr("fill", "green");
+    let circles = svg.selectAll('.group').data(myData).enter().append('circle').attr('class', 'group').attr('r', function (d) {
+      return radiusScale(d.Total);
+    }).attr('fill', function (d) {
+      if (d.NutrientGroup === 'Adults2') {
+        return 'green';
+      } else if (d.NutrientGroup === 'LowerIncome') {
+        return 'yellow';
+      } else if (d.NutrientGroup === 'HigherIncome') {
+        return 'pink';
+      } else if (d.NutrientGroup === 'Children2') {
+        return 'blue';
+      } else {
+        return 'yellow';
+      }
+    }).on('click', function (d) {
+      console.log(d);
+    });
 
     const ticked = () => {
-      circles.attr("cx", function (d) {
+      circles.attr('cx', function (d) {
         return d.x;
-      }).attr("cy", function (d) {
+      }).attr('cy', function (d) {
         return d.y;
       });
-    }; //feed the data to the simulation, each time clock ticks, run function and reposition circles
+    };
 
+    d3__WEBPACK_IMPORTED_MODULE_0__["select"]('#location').on('click', function (d) {
+      simulation.force('x', forceX).alphaTarget(0.5).restart();
+    }); //alpaTarget gives it more energy
 
-    simulation.nodes(myData).on("tick", ticked);
-    console.log(data);
+    d3__WEBPACK_IMPORTED_MODULE_0__["select"]('#combine').on('click', function () {
+      simulation.force('x', d3__WEBPACK_IMPORTED_MODULE_0__["forceX"](width / 2).strength(0.05)).alphaTarget(0.5).restart();
+    }); //feed the data to the simulation, each time clock ticks, run function and reposition circles
+
+    simulation.nodes(myData).on('tick', ticked);
+    console.log(myData);
   } catch (error) {
     console.log(error);
   }

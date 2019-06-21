@@ -1,6 +1,6 @@
-console.log("hello world");
-import * as d3 from "d3";
-import axios from "axios";
+console.log('hello world');
+import * as d3 from 'd3';
+import axios from 'axios';
 // eslint-disable-next-line no-undef
 //console.log('app loaded')
 // var circle = d3.selectAll('circle');
@@ -162,56 +162,104 @@ import axios from "axios";
 //         d3.select(self.frameElement)
 //             .style("height", diameter + "px");
 async function createGraph() {
-  const width = 500;
+  const width = 900;
   const height = 500;
   try {
     const svg = d3
-      .select("#body")
-      .append("svg")
-      .attr("height", height)
-      .attr("width", width)
-      .append("g")
-      .attr("transform", "translate(0,0)");
+      .select('#body')
+      .append('svg')
+      .attr('height', height)
+      .attr('width', width)
+      .append('g')
+      .attr('transform', 'translate(0,0)');
+
+      const radiusScale = d3.scaleSqrt().domain([500, 2050]).range([10, 80]);
 
       //read in the data
-    const csv = axios.get("/public/foodDataSet.csv");
-    console.log("csv", csv);
+    const csv = axios.get('/public/foodDataSet.csv');
+    console.log('csv', csv);
 
-    let myData = await d3.csv("foodDataSet.csv");
-    console.log("Data returned", myData);
+    let myData = await d3.csv('foodDataSet.csv');
+    console.log('Data returned', myData);
+
+
+
+    const forceX = d3.forceX(function(d){
+      if (d.Location === 'at-home'){
+        return 250;
+      } else {
+        return 750;
+      }
+
+    }).strength(0.05);
 
     // forces telling circles how to move and interact
     //this one pushed everything to the middle
     const simulation = d3.forceSimulation()
-    .force("x", d3.forceX(width / 2).strength(0.05))
-    .force("y", d3.forceY(height/2).strength(0.05));
-
+    //.force("x", d3.forceX(width / 2).strength(0.05))
+    .force('x', (forceX))
+    .force('y', d3.forceY(height / 2).strength(0.05))
+    .force('collide', d3.forceCollide(function(d){
+      return radiusScale(d.Total) + 1;
+    }));
+    //force collide gives radious fo area for collision to avoid - should match the radious of the circle
 
 
     //creating circles for each datapoint
     let circles = svg
-      .selectAll(".group")
+    .selectAll('.group')
       .data(myData)
       .enter()
-      .append("circle")
-      .attr("class", "group")
-      .attr("r", 10)
-      .attr("fill", "green");
+      .append('circle')
+      .attr('class', 'group')
+      .attr('r', function(d){
+        return radiusScale(d.Total)
+      })
+      .attr('fill', function(d){
+        if (d.NutrientGroup === 'Adults2'){
+          return 'green';
+        } else if (d.NutrientGroup === 'LowerIncome'){
+          return 'yellow';
+        } else if (d.NutrientGroup === 'HigherIncome'){
+          return 'pink'
+        } else if (d.NutrientGroup === 'Children2'){
+          return 'blue'
+        } else {
+          return 'yellow'
+        }
+      })
+      .on('click', function(d){
+        console.log(d)
+      });
 
-    const ticked = () => {
-      circles
-      .attr("cx", function(d){
+      const ticked = () => {
+        circles
+      .attr('cx', function(d){
         return d.x;
       })
-      .attr("cy", function(d){
+      .attr('cy', function(d){
         return d.y;
       });
     };
 
-    //feed the data to the simulation, each time clock ticks, run function and reposition circles
-    simulation.nodes(myData).on("tick", ticked);
+    d3.select('#location').on('click', function(d){
+      simulation.force('x', forceX)
+      .alphaTarget(0.5)
+      .restart()
+    })
 
-    console.log(data);
+    //alpaTarget gives it more energy
+    d3.select('#combine').on('click', function(){
+      simulation
+      .force('x', d3.forceX(width / 2).strength(0.05))
+      .alphaTarget(0.5)
+      .restart()
+    });
+
+    //feed the data to the simulation, each time clock ticks, run function and reposition circles
+    simulation.nodes(myData).on('tick', ticked);
+
+    console.log(myData);
   } catch (error) {
     console.log(error);
   }
