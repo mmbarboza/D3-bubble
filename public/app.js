@@ -173,88 +173,122 @@ async function createGraph() {
       .append('g')
       .attr('transform', 'translate(0,0)');
 
-      const radiusScale = d3.scaleSqrt().domain([500, 2050]).range([10, 80]);
+    const radiusScale = d3
+      .scaleSqrt()
+      .domain([500, 2050])
+      .range([10, 80]);
 
-      //read in the data
+    //read in the data
     const csv = axios.get('/public/foodDataSet.csv');
     console.log('csv', csv);
 
     let myData = await d3.csv('foodDataSet.csv');
     console.log('Data returned', myData);
 
-
-
-    const forceX = d3.forceX(function(d){
-      if (d.Location === 'at-home'){
-        return 250;
-      } else {
-        return 750;
-      }
-
-    }).strength(0.05);
+    const forceX = d3
+      .forceX(function(d) {
+        if (d.Location === 'at-home') {
+          return 250;
+        } else {
+          return 750;
+        }
+      })
+      .strength(0.05);
 
     // forces telling circles how to move and interact
     //this one pushed everything to the middle
-    const simulation = d3.forceSimulation()
-    //.force("x", d3.forceX(width / 2).strength(0.05))
-    .force('x', (forceX))
-    .force('y', d3.forceY(height / 2).strength(0.05))
-    .force('collide', d3.forceCollide(function(d){
-      return radiusScale(d.Total) + 1;
-    }));
+    const simulation = d3
+      .forceSimulation()
+      //.force("x", d3.forceX(width / 2).strength(0.05))
+      .force('x', forceX)
+      .force('y', d3.forceY(height / 2).strength(0.05))
+      .force(
+        'collide',
+        d3.forceCollide(function(d) {
+          return radiusScale(d.Total) + 1;
+        })
+      );
     //force collide gives radious fo area for collision to avoid - should match the radious of the circle
-
 
     //creating circles for each datapoint
     let circles = svg
-    .selectAll('.group')
+      .selectAll('.dataCircle')
       .data(myData)
       .enter()
       .append('circle')
-      .attr('class', 'group')
-      .attr('r', function(d){
-        return radiusScale(d.Total)
+      .attr('class', 'dataCircle')
+      .attr('r', function(d) {
+        return radiusScale(d.Total);
       })
-      .attr('fill', function(d){
-        if (d.NutrientGroup === 'Adults2'){
+      .attr('fill', function(d) {
+        if (d.NutrientGroup === 'Adults2') {
           return 'green';
-        } else if (d.NutrientGroup === 'LowerIncome'){
+        } else if (d.NutrientGroup === 'LowerIncome') {
           return 'yellow';
-        } else if (d.NutrientGroup === 'HigherIncome'){
-          return 'pink'
-        } else if (d.NutrientGroup === 'Children2'){
-          return 'blue'
+        } else if (d.NutrientGroup === 'HigherIncome') {
+          return 'pink';
+        } else if (d.NutrientGroup === 'Children2') {
+          return 'blue';
         } else {
-          return 'yellow'
+          return 'yellow';
         }
       })
-      .on('click', function(d){
-        console.log(d)
+      .on('click', function(d) {
+        console.log(d);
+      })
+      .on('mouseover', function(){
+        console.log("mouseover")
       });
 
-      const ticked = () => {
-        circles
-      .attr('cx', function(d){
-        return d.x;
-      })
-      .attr('cy', function(d){
-        return d.y;
-      });
+    let toolTips = d3
+      .select('#body')
+      .append('div')
+      .style('position', 'absolute')
+      .style('visibility', 'hidden')
+      .style('background-color', 'blue')
+      .style('border', 'solid')
+      .style('border-width', '1px')
+      .style('border-radius', '5px')
+      .style('padding', '10px')
+      .text("I'm a circle!");
+
+    const ticked = () => {
+      circles
+        .attr('cx', function(d) {
+          return d.x;
+        })
+        .attr('cy', function(d) {
+          return d.y;
+        });
     };
 
-    d3.select('#location').on('click', function(d){
-      simulation.force('x', forceX)
-      .alphaTarget(0.5)
-      .restart()
-    })
+    d3.select('#location').on('click', function(d) {
+      simulation
+        .force('x', forceX)
+        .alphaTarget(0.5)
+        .restart();
+    });
 
     //alpaTarget gives it more energy
-    d3.select('#combine').on('click', function(){
+    d3.select('#combine').on('click', function() {
       simulation
-      .force('x', d3.forceX(width / 2).strength(0.05))
-      .alphaTarget(0.5)
-      .restart()
+        .force('x', d3.forceX(width / 2).strength(0.05))
+        .alphaTarget(0.5)
+        .restart();
     });
+
+    d3.select('.dataCircle')
+      .on('mouseover', function() {
+        return toolTips.style('visibility', 'visible');
+      })
+      .on('mousemove', function() {
+        return toolTips
+          .style('top', event.pageY - 50 + 'px')
+          .style('left', event.pageX - 50 + 'px')
+        })
+      .on('mouseout', function() {
+        return toolTips.style('visibility', 'hidden');
+      });
 
     //feed the data to the simulation, each time clock ticks, run function and reposition circles
     simulation.nodes(myData).on('tick', ticked);

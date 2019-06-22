@@ -31168,7 +31168,7 @@ async function createGraph() {
     })); //force collide gives radious fo area for collision to avoid - should match the radious of the circle
     //creating circles for each datapoint
 
-    let circles = svg.selectAll('.group').data(myData).enter().append('circle').attr('class', 'group').attr('r', function (d) {
+    let circles = svg.selectAll('.dataCircle').data(myData).enter().append('circle').attr('class', 'dataCircle').attr('r', function (d) {
       return radiusScale(d.Total);
     }).attr('fill', function (d) {
       if (d.NutrientGroup === 'Adults2') {
@@ -31184,7 +31184,10 @@ async function createGraph() {
       }
     }).on('click', function (d) {
       console.log(d);
+    }).on('mouseover', function () {
+      console.log("mouseover");
     });
+    let toolTips = d3__WEBPACK_IMPORTED_MODULE_0__["select"]('#body').append('div').style('position', 'absolute').style('visibility', 'hidden').style('background-color', 'blue').style('border', 'solid').style('border-width', '1px').style('border-radius', '5px').style('padding', '10px').text("I'm a circle!");
 
     const ticked = () => {
       circles.attr('cx', function (d) {
@@ -31200,6 +31203,13 @@ async function createGraph() {
 
     d3__WEBPACK_IMPORTED_MODULE_0__["select"]('#combine').on('click', function () {
       simulation.force('x', d3__WEBPACK_IMPORTED_MODULE_0__["forceX"](width / 2).strength(0.05)).alphaTarget(0.5).restart();
+    });
+    d3__WEBPACK_IMPORTED_MODULE_0__["select"]('.dataCircle').on('mouseover', function () {
+      return toolTips.style('visibility', 'visible');
+    }).on('mousemove', function () {
+      return toolTips.style('top', event.pageY - 50 + 'px').style('left', event.pageX - 50 + 'px');
+    }).on('mouseout', function () {
+      return toolTips.style('visibility', 'hidden');
     }); //feed the data to the simulation, each time clock ticks, run function and reposition circles
 
     simulation.nodes(myData).on('tick', ticked);
