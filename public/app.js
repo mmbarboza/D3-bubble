@@ -1,6 +1,8 @@
-console.log('hello world');
-import * as d3 from 'd3';
-import axios from 'axios';
+/* eslint-disable quotes */
+console.log("hello world");
+import * as d3 from "d3";
+import axios from "axios";
+import * as d3tip from 'd3-tip';
 // eslint-disable-next-line no-undef
 //console.log('app loaded')
 // var circle = d3.selectAll('circle');
@@ -165,13 +167,15 @@ async function createGraph() {
   const width = 900;
   const height = 500;
   try {
+
+    //const tip = d3.d3tip.tip().attr('class', 'd3-tip').html(function(d) { return d; });
     const svg = d3
-      .select('#body')
-      .append('svg')
-      .attr('height', height)
-      .attr('width', width)
-      .append('g')
-      .attr('transform', 'translate(0,0)');
+      .select("#body")
+      .append("svg")
+      .attr("height", height)
+      .attr("width", width)
+      .append("g")
+      .attr("transform", "translate(0,0)");
 
     const radiusScale = d3
       .scaleSqrt()
@@ -179,15 +183,15 @@ async function createGraph() {
       .range([10, 80]);
 
     //read in the data
-    const csv = axios.get('/public/foodDataSet.csv');
-    console.log('csv', csv);
+    const csv = axios.get("/public/foodDataSet.csv");
+    console.log("csv", csv);
 
-    let myData = await d3.csv('foodDataSet.csv');
-    console.log('Data returned', myData);
+    let myData = await d3.csv("foodDataSet.csv");
+    console.log("Data returned", myData);
 
     const forceX = d3
       .forceX(function(d) {
-        if (d.Location === 'at-home') {
+        if (d.Location === "at-home") {
           return 250;
         } else {
           return 750;
@@ -200,98 +204,145 @@ async function createGraph() {
     const simulation = d3
       .forceSimulation()
       //.force("x", d3.forceX(width / 2).strength(0.05))
-      .force('x', forceX)
-      .force('y', d3.forceY(height / 2).strength(0.05))
+      .force("x", forceX)
+      .force("y", d3.forceY(height / 2).strength(0.05))
       .force(
-        'collide',
+        "collide",
         d3.forceCollide(function(d) {
           return radiusScale(d.Total) + 1;
         })
       );
     //force collide gives radious fo area for collision to avoid - should match the radious of the circle
 
+    //create tooltip
+    let toolTips = d3
+      .select("#body")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+    .style("z-index", "10")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "2px")
+      .style("border-radius", "5px")
+      .style("padding", "5px");
+
+    let mouseover = function(d) {
+      console.log("mouseover");
+      toolTips.style("opacity", 1);
+      d3.select(this)
+        .style("stroke", "gray")
+        .style("opacity", 1)
+       // .html("The caloric <br> count is " + d.Total)
+        // .style("left", (d3.event.pageX + 16 + 'px'))
+        // .style("top", (d3.event.pageY + 16 + 'px'));
+    };
+
+    let mousemove = function(d) {
+      console.log("mousemove");
+      toolTips
+        .html("The caloric <br> count is " + d.Total)
+        .style("left", (d3.event.pageX + 10 + 'px'))
+        .style("top", (d3.event.pageY - 10 + 'px'));
+    };
+
+    let mouseleave = function() {
+      console.log("mouseleave");
+      toolTips.style("opactiy", 0);
+      d3.select(this)
+        .style("stroke", "none")
+        .style("opacity", 0.8);
+    };
+
     //creating circles for each datapoint
     let circles = svg
-      .selectAll('.dataCircle')
+      .selectAll(".dataCircle")
       .data(myData)
       .enter()
-      .append('circle')
-      .attr('class', 'dataCircle')
-      .attr('r', function(d) {
+      .append("circle")
+      .attr("class", "dataCircle")
+      .attr("r", function(d) {
         return radiusScale(d.Total);
       })
-      .attr('fill', function(d) {
-        if (d.NutrientGroup === 'Adults2') {
-          return 'green';
-        } else if (d.NutrientGroup === 'LowerIncome') {
-          return 'yellow';
-        } else if (d.NutrientGroup === 'HigherIncome') {
-          return 'pink';
-        } else if (d.NutrientGroup === 'Children2') {
-          return 'blue';
+      .attr("fill", function(d) {
+        if (d.NutrientGroup === "Adults2") {
+          return "green";
+        } else if (d.NutrientGroup === "LowerIncome") {
+          return "yellow";
+        } else if (d.NutrientGroup === "HigherIncome") {
+          return "pink";
+        } else if (d.NutrientGroup === "Children2") {
+          return "blue";
         } else {
-          return 'yellow';
+          return "yellow";
         }
       })
-      .on('click', function(d) {
+      .on("click", function(d) {
         console.log(d);
       })
-      .on('mouseover', function(){
-        console.log("mouseover")
-      });
+      // .on("mouseover", tip.show)
+      // .on("mouseout", tip.hide);
+      // .on('mouseover', function(){
+      //   console.log('mouseover');
+      // })
+      .on("mouseover", mouseover)
+      .on("mousemove", mousemove)
+      .on("mouseleave", mouseleave);
 
-    let toolTips = d3
-      .select('#body')
-      .append('div')
-      .style('position', 'absolute')
-      .style('visibility', 'hidden')
-      .style('background-color', 'blue')
-      .style('border', 'solid')
-      .style('border-width', '1px')
-      .style('border-radius', '5px')
-      .style('padding', '10px')
-      .text("I'm a circle!");
+    // let toolTips = d3
+    //   .select('#body')
+    //   .append('div')
+    //   .style('position', 'absolute')
+    //   .style('visibility', 'hidden')
+    //   .style('background-color', 'blue')
+    //   .style('border', 'solid')
+    //   .style('border-width', '1px')
+    //   .style('border-radius', '5px')
+    //   .style('padding', '10px')
+    //   .text("I'm a circle!");
 
     const ticked = () => {
       circles
-        .attr('cx', function(d) {
+        .attr("cx", function(d) {
           return d.x;
         })
-        .attr('cy', function(d) {
+        .attr("cy", function(d) {
           return d.y;
         });
     };
 
-    d3.select('#location').on('click', function(d) {
+    d3.select("#location").on("click", function() {
       simulation
-        .force('x', forceX)
+        .force("x", forceX)
         .alphaTarget(0.5)
         .restart();
     });
 
     //alpaTarget gives it more energy
-    d3.select('#combine').on('click', function() {
+    d3.select("#combine").on("click", function() {
       simulation
-        .force('x', d3.forceX(width / 2).strength(0.05))
+        .force("x", d3.forceX(width / 2).strength(0.05))
         .alphaTarget(0.5)
         .restart();
     });
 
-    d3.select('.dataCircle')
-      .on('mouseover', function() {
-        return toolTips.style('visibility', 'visible');
-      })
-      .on('mousemove', function() {
-        return toolTips
-          .style('top', event.pageY - 50 + 'px')
-          .style('left', event.pageX - 50 + 'px')
-        })
-      .on('mouseout', function() {
-        return toolTips.style('visibility', 'hidden');
-      });
+    // d3.select('.dataCircle')
+    //   .on('mouseover', function() {
+    //     // return toolTips.style('visibility', 'visible');
+    //     console.log('Hello');
+    //   })
+    //   .on('mousemove', function() {
+    //     return toolTips
+    //       .style('top', event.pageY - 50 + 'px')
+    //       .style('left', event.pageX - 50 + 'px');
+    //     })
+    //   .on('mouseout', function() {
+    //     return toolTips.style('visibility', 'hidden');
+    //   });
 
     //feed the data to the simulation, each time clock ticks, run function and reposition circles
-    simulation.nodes(myData).on('tick', ticked);
+    simulation.nodes(myData).on("tick", ticked);
 
     console.log(myData);
   } catch (error) {
