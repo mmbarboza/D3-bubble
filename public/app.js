@@ -222,6 +222,7 @@ async function createGraph() {
       .attr("class", "tooltip")
       .style("position", "absolute")
     .style("z-index", "10")
+    .style("visibility", "hidden")
       .style("background-color", "white")
       .style("border", "solid")
       .style("border-width", "2px")
@@ -230,13 +231,14 @@ async function createGraph() {
 
     let mouseover = function(d) {
       console.log("mouseover");
-      toolTips.style("opacity", 1);
+      toolTips.style("opacity", 1)
+      .style("visibility", "visible");
       d3.select(this)
         .style("stroke", "gray")
         .style("opacity", 1)
-       // .html("The caloric <br> count is " + d.Total)
-        // .style("left", (d3.event.pageX + 16 + 'px'))
-        // .style("top", (d3.event.pageY + 16 + 'px'));
+       .html("The caloric <br> count is " + d.Total)
+        .style("left", (d3.event.pageX + 16 + 'px'))
+        .style("top", (d3.event.pageY + 16 + 'px'));
     };
 
     let mousemove = function(d) {
@@ -247,12 +249,14 @@ async function createGraph() {
         .style("top", (d3.event.pageY - 10 + 'px'));
     };
 
-    let mouseleave = function() {
-      console.log("mouseleave");
-      toolTips.style("opactiy", 0);
-      d3.select(this)
-        .style("stroke", "none")
-        .style("opacity", 0.8);
+    let mouseout = function() {
+      console.log("mouseleave")
+      toolTips.style("opacity", 0)
+      .style("visibility", "hidden");
+      // d3.select(this)
+      // .style("visibility", "hidden")
+      //   .style("stroke", "none")
+      //   .style("opacity", 0);
     };
 
     //creating circles for each datapoint
@@ -288,7 +292,7 @@ async function createGraph() {
       // })
       .on("mouseover", mouseover)
       .on("mousemove", mousemove)
-      .on("mouseleave", mouseleave);
+      .on("mouseout", mouseout);
 
     // let toolTips = d3
     //   .select('#body')

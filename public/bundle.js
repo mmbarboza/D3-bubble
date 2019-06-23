@@ -31518,14 +31518,12 @@ async function createGraph() {
     })); //force collide gives radious fo area for collision to avoid - should match the radious of the circle
     //create tooltip
 
-    let toolTips = d3__WEBPACK_IMPORTED_MODULE_0__["select"]("#body").append("div").style("opacity", 0).attr("class", "tooltip").style("position", "absolute").style("z-index", "10").style("background-color", "white").style("border", "solid").style("border-width", "2px").style("border-radius", "5px").style("padding", "5px");
+    let toolTips = d3__WEBPACK_IMPORTED_MODULE_0__["select"]("#body").append("div").style("opacity", 0).attr("class", "tooltip").style("position", "absolute").style("z-index", "10").style("visibility", "hidden").style("background-color", "white").style("border", "solid").style("border-width", "2px").style("border-radius", "5px").style("padding", "5px");
 
     let mouseover = function (d) {
       console.log("mouseover");
-      toolTips.style("opacity", 1);
-      d3__WEBPACK_IMPORTED_MODULE_0__["select"](this).style("stroke", "gray").style("opacity", 1); // .html("The caloric <br> count is " + d.Total)
-      // .style("left", (d3.event.pageX + 16 + 'px'))
-      // .style("top", (d3.event.pageY + 16 + 'px'));
+      toolTips.style("opacity", 1).style("visibility", "visible");
+      d3__WEBPACK_IMPORTED_MODULE_0__["select"](this).style("stroke", "gray").style("opacity", 1).html("The caloric <br> count is " + d.Total).style("left", d3__WEBPACK_IMPORTED_MODULE_0__["event"].pageX + 16 + 'px').style("top", d3__WEBPACK_IMPORTED_MODULE_0__["event"].pageY + 16 + 'px');
     };
 
     let mousemove = function (d) {
@@ -31533,10 +31531,12 @@ async function createGraph() {
       toolTips.html("The caloric <br> count is " + d.Total).style("left", d3__WEBPACK_IMPORTED_MODULE_0__["event"].pageX + 10 + 'px').style("top", d3__WEBPACK_IMPORTED_MODULE_0__["event"].pageY - 10 + 'px');
     };
 
-    let mouseleave = function () {
+    let mouseout = function () {
       console.log("mouseleave");
-      toolTips.style("opactiy", 0);
-      d3__WEBPACK_IMPORTED_MODULE_0__["select"](this).style("stroke", "none").style("opacity", 0.8);
+      toolTips.style("opacity", 0).style("visibility", "hidden"); // d3.select(this)
+      // .style("visibility", "hidden")
+      //   .style("stroke", "none")
+      //   .style("opacity", 0);
     }; //creating circles for each datapoint
 
 
@@ -31561,7 +31561,7 @@ async function createGraph() {
     // .on('mouseover', function(){
     //   console.log('mouseover');
     // })
-    .on("mouseover", mouseover).on("mousemove", mousemove).on("mouseleave", mouseleave); // let toolTips = d3
+    .on("mouseover", mouseover).on("mousemove", mousemove).on("mouseout", mouseout); // let toolTips = d3
     //   .select('#body')
     //   .append('div')
     //   .style('position', 'absolute')
